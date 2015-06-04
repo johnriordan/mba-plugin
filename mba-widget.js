@@ -29,7 +29,8 @@ var WIDGET = {
         ].join("");
     },
     db: {
-        views: []
+        views: [],
+        offers: []
     }
 };
 
@@ -51,6 +52,13 @@ WIDGET.controller = {
 
     process: function (url, hasJumbotron) {
         "use strict";
+
+        function fixedEncodeURIComponent (str) {
+          return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+            return "%" + c.charCodeAt(0).toString(16);
+          });
+        }
+
         jQuery("#mba-widget").before("<div id='mba-widget-id'></div>");
         jQuery.getJSON(url, function (data) {
             var items = [];
@@ -61,49 +69,44 @@ WIDGET.controller = {
                         return;
                     }
 
-                    var url = result.content_ads && result.content_ads.logo && result.content_ads.logo.url || null;
-
-                    var offer = {
+                    var offerUrl = result.content_ads && result.content_ads.logo && result.content_ads.logo.url || null,
+                        offer = {
                             offerId: offerObj.id,
                             name: result.title,
                             title: offerObj.title,
-                            url: url,
+                            url: offerUrl,
                             description: offerObj.description,
                             image: offerObj.photo,
                             date: new Date(offerObj.expiry_ts * 1000),
                             views: offerObj.views_no
-                    };
-                    var theDate = offer.date;
-                    var formattedDate = [
+                    },
+                    theDate = offer.date,
+                        formattedDate = [
                         "0" + theDate.getDate(),
                         "0" + (theDate.getMonth() + 1),
                         theDate.getFullYear()
                     ].map(function(v) {
                         return (typeof v === "string") ? v.substr(v.length - 2) : v;
-                    });
+                    }),
+                    html = "";
 
-                    var subject = encodeURIComponent(offer.name + ": " + offer.title);
-                    var body = encodeURIComponent(offer.name + ": " + offer.title + ",  " + offer.description);
-                    var fbURL = "http://www.facebook.com/sharer.php?u=" + offer.url;
-                    var twURL = "https://twitter.com/intent/tweet?url=" + offer.url + "&text=" + body;
-
-                    var html = "";
+                    WIDGET.db.offers.push(offer);
                     html += "  <div data-offer-id='" + offer.offerId + "' class='mba-offer' id='mba-offer-" + offerIndex + "'>";
                     html += "    <div class='crop'>";
                     html += "      <img width='120px' src='" + offer.image + "' />";
                     html += "    </div>";
                     html += "    <h4>" + offer.title + "</h4>";
                     html += offer.description ? "<p>" + offer.description + "</p>" : "";
-                    html += "    <p>G&#252;ltig bis: " + formattedDate.join(".");
-                    html += ", " + offer.views + " Aufrufe";
-                    html += "    </p>";
-                    html += "    <ul class='mba-share'>";
-                    html += "      <li class='link1'><a href='mailto:?subject=" + subject + "&body=" + encodeURIComponent(offer.description + "\n") + offer.url + "'></a></li>";
-                    html += "      <li class='link2'>";
-                    html += "        <a id='tw-share' href='javascript: void(0);' onClick='WIDGET.controller.openWindow(\"" + twURL + "\")' target='_blank'></a>";
+                    html += "    <p>G&#252;ltig bis: " + formattedDate.join(".") + ", " + offer.views + " Aufrufe</p>";
+                    html += "    <ul class='mba-share' data-offer-index=" + offerIndex + ">";
+                    html += "      <li class='link1' title='Mail - share'>";
+                    html += "        <a class='mail-share' href='javascript: void(0);'></a>";
+                    html += "      </li>";
+                    html += "      <li class='link2' title='Twitter - share'>";
+                    html += "        <a class='tw-share' href='javascript: void(0);'></a>";
                     html += "      </li>";
                     html += "      <li class='link3' title='Facebook - share'>";
-                    html += "        <a id='fb-share' href='javascript: void(0);' onClick='WIDGET.controller.openWindow(\"" + fbURL + "\")' target='_blank'></a>";
+                    html += "        <a class='fb-share' href='javascript: void(0);'></a>";
                     html += "      </li>";
                     html += "     </ul>";
                     html += "  </div>";
@@ -132,10 +135,41 @@ WIDGET.controller = {
 
                 if (!(isSelected)) {
                     jQuery(this).addClass("selected");
-                    var offerId = jQuery(this).data("offer-id");
-                    WIDGET.controller.markOfferAsViewed(offerId);
+                    var theofferId = jQuery(this).data("offer-id");
+                    WIDGET.controller.markOfferAsViewed(theofferId);
                 }
             });
+
+            function offerFromEvent (event) {
+                var element = jQuery(event.target.parentElement.parentElement),
+                    offerIndex = parseInt(element.data("offer-index"));
+                return WIDGET.db.offers[offerIndex];
+            }
+
+            jQuery(".mba-share .tw-share").on("click", function (event) {
+                event.stopPropagation();
+                var offer = offerFromEvent(event),
+                    body = fixedEncodeURIComponent(offer.name + ": " + offer.title + ",  " + offer.description),
+                    twURL = "https://twitter.com/intent/tweet?url=" + offer.url + "&text=" + body;
+                WIDGET.controller.openWindow(twURL);
+            });
+
+            jQuery(".mba-share .fb-share").on("click", function (event) {
+                event.stopPropagation();
+                var offer = offerFromEvent(event);
+                var fbURL = "http://www.facebook.com/sharer.php?u=" + offer.url;
+                WIDGET.controller.openWindow(fbURL);
+            });
+
+            jQuery(".mba-share .mail-share").on("click", function (event) {
+                event.stopPropagation();
+                var offer = offerFromEvent(event),
+                    subject = fixedEncodeURIComponent(offer.name + ": " + offer.title),
+                    body = fixedEncodeURIComponent(offer.description + "\n" + (offer.url ? offer.url : "") ),
+                    uri = "mailto:?subject=" + subject + "&body=" + body;
+                window.location.href = uri;
+            });
+
         });
     },
 

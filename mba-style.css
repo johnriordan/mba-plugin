@@ -1,6 +1,6 @@
 
 #mba-widget-id {
-  margin: 0 9 1em 0;
+  margin: 0 0 1em 0;
   padding: 0;
   margin-bottom: 20px;
 }
@@ -52,6 +52,11 @@
   .mba-offer p {
     padding: 0;
     margin: 5px 0 0 0;
+  }
+
+  .mba-offer h4 {
+    margin: 0;
+    padding: 0;
   }
 
   .mba-share {}
