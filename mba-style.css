@@ -8,7 +8,6 @@
 .mba-offer {}
 
   .mba-offer {
-  	background-color: white;
     clear: both;
     margin: 2px 0 0 0;
     border: 1px gainsboro solid;
@@ -95,4 +94,14 @@
       width: 16px;
       background: url(symboles.png) -65px 0px no-repeat;
       margin: 2px 0 0 10px;
+    }
+
+    .favs {
+      clear: both;
+      margin: 10px auto;
+    }
+
+    .favs a {
+      text-decoration: none;
+      color: gray;
     }

@@ -12,37 +12,53 @@ var WIDGET = {
             "https://extapi.local.ch/en/v3/entries/",
             "?lang=en",
             "&user=bea25809bdf6ad3d1a3db21a22a5ffd5ca7788cf",
-            "&tid=v1_130811_1376258400000_bea25809bdf6ad3d1a3db21a22a5ffd5ca7788cf_a80a_95a1",
             "&v=1.0",
-            "&key=F1AD7B165AA149A2AE60374847902A12",
+            "&key=C6B416E282534FB69A125FD7FFCFA6E7",
             "&platform=unknown",
             "&limit=10",
             "&facets=category%2Ccity%3A20",
-            "&q=" + q,
-            "&rid=m0edm"
+            "&q=" + q
         ].join("");
     },
-    callbackUrl: function () {
-        "use strict";
-        return [
-            "https://extapi.local.ch/en/0/tel/analytics"
-        ].join("");
-    },
+    callbackUrl: "https://extapi.local.ch/en/0/tel/analytics",
     db: {
         views: [],
         offers: []
+    },
+    wording: {
+        like: "<span style='color: red'>&#9829;</span> me on local.ch",
+        it: {
+            title: "Offerte speciali e novit&agrave;.",
+            like: "Per le mie offerte"
+        },
+        de: {
+            title: "Sonderangebote und Neuigkeiten.",
+            like: "F&#252r meine Angebote"
+        },
+        fr: {
+            title: "Offres sp&eacute;ciales et nouveaut&eacute;s.",
+            like: "Pour mes offres"
+        }
     }
 };
 
 WIDGET.init = function () {
     "use strict";
-    var scriptPram = document.getElementById("mba-widget");
-    var q = scriptPram.getAttribute("data-q");
-    var hasJumbotron = scriptPram.getAttribute("data-jumbotron") === "true" || false;
+    var scriptParam = document.getElementById("mba-widget"),
+        q = scriptParam.getAttribute("data-q"),
+        hasJumbotron = scriptParam.getAttribute("data-jumbotron") === "true" || false,
+        lang = scriptParam.getAttribute("data-lang"),
+        font = scriptParam.getAttribute("data-font"),
+        backgroundColor = scriptParam.getAttribute("data-background");
 
-    WIDGET.controller.appendStyle();
+    if (!lang) {
+        lang = window.navigator.userLanguage || window.navigator.language;
+        lang = (lang === "de" || lang === "fr" || lang === "it") ? lang : "de";
+    }
+
+    WIDGET.controller.appendStyleWithFont(font, backgroundColor);
     WIDGET.controller.appendLib(function () {
-        WIDGET.controller.process(WIDGET.url(q), hasJumbotron);
+        WIDGET.controller.process(WIDGET.url(q), hasJumbotron, q, lang);
     });
 };
 
@@ -50,7 +66,7 @@ document.body.onload = WIDGET.init;
 
 WIDGET.controller = {
 
-    process: function (url, hasJumbotron) {
+    process: function (url, hasJumbotron, q, lang) {
         "use strict";
 
         function fixedEncodeURIComponent (str) {
@@ -79,16 +95,16 @@ WIDGET.controller = {
                             image: offerObj.photo,
                             date: new Date(offerObj.expiry_ts * 1000),
                             views: offerObj.views_no
-                    },
-                    theDate = offer.date,
-                        formattedDate = [
-                        "0" + theDate.getDate(),
-                        "0" + (theDate.getMonth() + 1),
-                        theDate.getFullYear()
-                    ].map(function(v) {
-                        return (typeof v === "string") ? v.substr(v.length - 2) : v;
-                    }),
-                    html = "";
+                        },
+                        theDate = offer.date,
+                            formattedDate = [
+                            "0" + theDate.getDate(),
+                            "0" + (theDate.getMonth() + 1),
+                            theDate.getFullYear()
+                        ].map(function(v) {
+                            return (typeof v === "string") ? v.substr(v.length - 2) : v;
+                        }),
+                        html = "";
 
                     WIDGET.db.offers.push(offer);
                     html += "  <div data-offer-id='" + offer.offerId + "' class='mba-offer' id='mba-offer-" + offerIndex + "'>";
@@ -115,17 +131,25 @@ WIDGET.controller = {
                 });
             });
 
-            var root = "<h3>Sonderangebote und Neuigkeiten</h3>";
+            var root = "<h3>" + WIDGET.wording[lang].title + "</h3>";
             root += "<div id='mba-offer-wrapper'>";
             root += items.join("");
             root += "</div>";
 
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent)) {
+                var link = "https://i.local.ch/#d/" + q + "/follow",
+                    header = WIDGET.wording.like,
+                    text = WIDGET.wording[lang].like;
+                // TODO brbr
+                root += "<br /><br /><p class='favs'><strong><a href='" + link + "'>" + header + "<br />" + text + "</a></strong></p>";
+            }
+
             jQuery("#mba-widget-id").append(root);
 
             if (hasJumbotron) {
-                var offerElement = jQuery(".mba-offer").first();
+                var offerElement = jQuery(".mba-offer").first(),
+                    offerId = offerElement.data("offer-id");
                 offerElement.addClass("selected");
-                var offerId = offerElement.data("offer-id");
                 WIDGET.controller.markOfferAsViewed(offerId);
             }
 
@@ -156,8 +180,8 @@ WIDGET.controller = {
 
             jQuery(".mba-share .fb-share").on("click", function (event) {
                 event.stopPropagation();
-                var offer = offerFromEvent(event);
-                var fbURL = "http://www.facebook.com/sharer.php?u=" + offer.url;
+                var offer = offerFromEvent(event),
+                    fbURL = "http://www.facebook.com/sharer.php?u=" + offer.url;
                 WIDGET.controller.openWindow(fbURL);
             });
 
@@ -176,23 +200,25 @@ WIDGET.controller = {
     markOfferAsViewed: function (offerId){
         "use strict";
         var data = {
-            category: "MBA_OFFER",
-            action: "view",
-            ts: 1432714809,
-            value: offerId
-        };
-        var views = WIDGET.db.views;
+                category: "MBA_OFFER",
+                action: "view",
+                ts: 1432714809,
+                value: offerId
+            },
+            views = WIDGET.db.views;
+
         if (jQuery.inArray(offerId, views) === -1) {
             views.push(offerId);
-            // jQuery.post(WIDGET.callbackUrl(), data);
+            jQuery.post(WIDGET.callbackUrl, data);
         }
     },
 
     openWindow: function (url) {
         "use strict";
-        var winHeight = 350, winWidth = 520;
-        var winTop = (window.screen.height / 2) - (winHeight / 2);
-        var winLeft = (window.screen.width / 2) - (winWidth / 2);
+        var winHeight = 350,
+            winWidth = 520,
+            winTop = (window.screen.height / 2) - (winHeight / 2),
+            winLeft = (window.screen.width / 2) - (winWidth / 2);
         window.open(url, "share", "top=" + winTop + ",left=" + winLeft + ",toolbar=0,status=0,width=" + winWidth + ",height=" + winHeight);
     },
 
@@ -202,8 +228,8 @@ WIDGET.controller = {
         // TODO check for a smaller lib?
         "use strict";
         if (typeof jQuery !== undefined) {
-            var head = document.getElementsByTagName("head")[0];
-            var script = document.createElement("script");
+            var head = document.head || document.getElementsByTagName("head")[0],
+                script = document.createElement("script");
             script.type = "text/javascript";
             script.onload = callback;
             script.src = "//code.jquery.com/jquery-2.1.4.min.js";
@@ -211,13 +237,28 @@ WIDGET.controller = {
         }
     },
 
-    appendStyle: function () {
+    appendStyleWithFont: function (fontFamily, backgroundColor) {
         "use strict";
-        var head = document.getElementsByTagName("head")[0];
-        var link = document.createElement("link");
+        var head = document.head || document.getElementsByTagName("head")[0],
+            link = document.createElement("link");
         link.setAttribute("rel", "stylesheet");
         link.setAttribute("type", "text/css");
-        link.setAttribute("href", "mba-style.css");
+        // link.setAttribute("href", "mba-style.css");
+        link.setAttribute("href", "//www.coteries.com/local.ch/MBAPlugin/mba-style.css");
         head.appendChild(link);
+
+        var css = fontFamily ? "#mba-widget-id {font-family: " + fontFamily + "}" : "";
+        css += backgroundColor ? ".mba-offer {background-color: " + backgroundColor + "}" : "";
+
+        if (fontFamily || backgroundColor) {
+            var style = document.createElement("style");
+            style.type = "text/css";
+            if (style.styleSheet) {
+                style.styleSheet.cssText = css;
+            } else {
+                style.appendChild(document.createTextNode(css));
+            }
+            head.appendChild(style);
+        }
     }
 };
