@@ -49,6 +49,7 @@ WIDGET.init = function () {
         hasJumbotron = scriptParam.getAttribute("data-jumbotron") === "true" || false,
         lang = scriptParam.getAttribute("data-lang"),
         font = scriptParam.getAttribute("data-font"),
+        hasTitle = scriptParam.getAttribute("data-title") === "false" ? false : true,
         backgroundColor = scriptParam.getAttribute("data-background");
 
     if (!lang) {
@@ -58,7 +59,7 @@ WIDGET.init = function () {
 
     WIDGET.controller.appendStyleWithFont(font, backgroundColor);
     WIDGET.controller.appendLib(function () {
-        WIDGET.controller.process(WIDGET.url(q), hasJumbotron, q, lang);
+        WIDGET.controller.process(WIDGET.url(q), hasJumbotron, q, lang, hasTitle);
     });
 };
 
@@ -66,7 +67,7 @@ document.body.onload = WIDGET.init;
 
 WIDGET.controller = {
 
-    process: function (url, hasJumbotron, q, lang) {
+    process: function (url, hasJumbotron, q, lang, hasTitle) {
         "use strict";
 
         function fixedEncodeURIComponent (str) {
@@ -85,7 +86,8 @@ WIDGET.controller = {
                         return;
                     }
 
-                    var offerUrl = result.content_ads && result.content_ads.logo && result.content_ads.logo.url || null,
+                    var entryId = data.results[index].id,
+                        offerUrl = ["http://i.local.ch/#d/", entryId, "/offer/", offerObj.id].join(""),
                         offer = {
                             offerId: offerObj.id,
                             name: result.title,
@@ -105,11 +107,11 @@ WIDGET.controller = {
                             return (typeof v === "string") ? v.substr(v.length - 2) : v;
                         }),
                         html = "";
-
                     WIDGET.db.offers.push(offer);
+
                     html += "  <div data-offer-id='" + offer.offerId + "' class='mba-offer' id='mba-offer-" + offerIndex + "'>";
                     html += "    <div class='crop'>";
-                    html += "      <img width='120px' src='" + offer.image + "' />";
+                    html += "      <img src='" + offer.image + "' />";
                     html += "    </div>";
                     html += "    <h4>" + offer.title + "</h4>";
                     html += offer.description ? "<p>" + offer.description + "</p>" : "";
@@ -131,7 +133,7 @@ WIDGET.controller = {
                 });
             });
 
-            var root = "<h3>" + WIDGET.wording[lang].title + "</h3>";
+            var root = hasTitle ? "<h3>" + WIDGET.wording[lang].title + "</h3>" : "";
             root += "<div id='mba-offer-wrapper'>";
             root += items.join("");
             root += "</div>";
@@ -174,14 +176,14 @@ WIDGET.controller = {
                 event.stopPropagation();
                 var offer = offerFromEvent(event),
                     body = fixedEncodeURIComponent(offer.name + ": " + offer.title + ",  " + offer.description),
-                    twURL = "https://twitter.com/intent/tweet?url=" + offer.url + "&text=" + body;
+                    twURL = "https://twitter.com/intent/tweet?url=" + fixedEncodeURIComponent(offer.url) + "&text=" + body;
                 WIDGET.controller.openWindow(twURL);
             });
 
             jQuery(".mba-share .fb-share").on("click", function (event) {
                 event.stopPropagation();
                 var offer = offerFromEvent(event),
-                    fbURL = "http://www.facebook.com/sharer.php?u=" + offer.url;
+                    fbURL = "http://www.facebook.com/sharer.php?u=" + fixedEncodeURIComponent(offer.url);
                 WIDGET.controller.openWindow(fbURL);
             });
 
@@ -243,8 +245,8 @@ WIDGET.controller = {
             link = document.createElement("link");
         link.setAttribute("rel", "stylesheet");
         link.setAttribute("type", "text/css");
-        // link.setAttribute("href", "mba-style.css");
-        link.setAttribute("href", "//www.coteries.com/local.ch/MBAPlugin/mba-style.css");
+        link.setAttribute("href", "mba-style.css");
+        // link.setAttribute("href", "//www.coteries.com/local.ch/MBAPlugin/mba-style.css");
         head.appendChild(link);
 
         var css = fontFamily ? "#mba-widget-id {font-family: " + fontFamily + "}" : "";

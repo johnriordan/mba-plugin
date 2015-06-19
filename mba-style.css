@@ -11,9 +11,11 @@
     clear: both;
     margin: 2px 0 0 0;
     border: 1px gainsboro solid;
-    padding: 1em 1em 2em 1em;
+    padding: .5em;
     text-align: left; 
     cursor: pointer;
+    min-height: 80px;
+    position: relative;
   }
 
   .mba-offer.selected {
@@ -24,25 +26,27 @@
     overflow: hidden;
     height: 80px;
     float: left;
+    display: inherit;
+    margin: 0 0 .5em 0;
   }
 
   .mba-offer.selected .crop {
     height: auto;
     overflow: visible;
     float: none;
+    display: inherit;
   }
 
   .mba-offer img {
     float: left;
-    width: 120px;
-    height: auto;
+    max-width: 100%;
+    max-height: 100%;
     margin: 2px 10px 5px 2px;
   }
 
   .mba-offer.selected img {
-    width: 240px;
-    height: auto;
-    min-height: 240px;
+    max-width: 240px;
+    max-height: 100%;
     margin: 2px auto;
     clear: both;
     float: none;
@@ -59,6 +63,12 @@
   }
 
   .mba-share {}
+
+    ul.mba-share {
+        position: absolute;;
+        bottom: .5em;
+        right: .5em;
+      }
 
     .mba-share li {
       display: inline;
