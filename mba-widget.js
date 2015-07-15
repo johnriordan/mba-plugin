@@ -42,32 +42,31 @@ var WIDGET = {
     }
 };
 
-WIDGET.init = function () {
+WIDGET.init = function (params) {
     "use strict";
-    var scriptParam = document.getElementById("mba-widget"),
-        q = scriptParam.getAttribute("data-q"),
-        hasJumbotron = scriptParam.getAttribute("data-jumbotron") === "true" || false,
-        lang = scriptParam.getAttribute("data-lang"),
-        font = scriptParam.getAttribute("data-font"),
-        hasTitle = scriptParam.getAttribute("data-title") === "false" ? false : true,
-        backgroundColor = scriptParam.getAttribute("data-background");
+
+    var elementId = params.elementId || "mba-widget",
+        entryId = params.entryId,
+        lang = params.lang || "de",
+        font = params.font || null,
+        backgroundColor = params.background || null,
+        hasJumbotron = params.hasJumbotron || false,
+        hasTitle = (params.hasTitle === false) ? false : true;
 
     if (!lang) {
         lang = window.navigator.userLanguage || window.navigator.language;
         lang = (lang === "de" || lang === "fr" || lang === "it") ? lang : "de";
     }
 
-    WIDGET.controller.appendStyleWithFont(font, backgroundColor);
+    WIDGET.controller.appendStyleWithFont(elementId, font, backgroundColor);
     WIDGET.controller.appendLib(function () {
-        WIDGET.controller.process(WIDGET.url(q), hasJumbotron, q, lang, hasTitle);
+        WIDGET.controller.process(elementId, WIDGET.url(entryId), hasJumbotron, entryId, lang, hasTitle);
     });
 };
 
-document.body.onload = WIDGET.init;
-
 WIDGET.controller = {
 
-    process: function (url, hasJumbotron, q, lang, hasTitle) {
+    process: function (elementId, url, hasJumbotron, entryId, lang, hasTitle) {
         "use strict";
 
         function fixedEncodeURIComponent (str) {
@@ -76,7 +75,6 @@ WIDGET.controller = {
           });
         }
 
-        jQuery("#mba-widget").before("<div id='mba-widget-id'></div>");
         jQuery.getJSON(url, function (data) {
             var items = [];
               jQuery.each( data.results, function (index, result) {
@@ -86,8 +84,7 @@ WIDGET.controller = {
                         return;
                     }
 
-                    var entryId = data.results[index].id,
-                        offerUrl = ["http://i.local.ch/#d/", entryId, "/offer/", offerObj.id].join(""),
+                    var offerUrl = ["http://i.local.ch/#d/", entryId, "/offer/", offerObj.id].join(""),
                         offer = {
                             offerId: offerObj.id,
                             name: result.title,
@@ -134,28 +131,30 @@ WIDGET.controller = {
             });
 
             var root = hasTitle ? "<h3>" + WIDGET.wording[lang].title + "</h3>" : "";
-            root += "<div id='mba-offer-wrapper'>";
+            root += "<div class='mba-offer-wrapper'>";
             root += items.join("");
             root += "</div>";
 
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent)) {
-                var link = "https://i.local.ch/#d/" + q + "/follow",
+                var link = "https://i.local.ch/#d/" + entryId + "/follow",
                     header = WIDGET.wording.like,
                     text = WIDGET.wording[lang].like;
                 // TODO brbr
                 root += "<br /><br /><p class='favs'><strong><a href='" + link + "'>" + header + "<br />" + text + "</a></strong></p>";
             }
 
-            jQuery("#mba-widget-id").append(root);
+            var rootElement = jQuery("#" + elementId);
+            rootElement.append(root);
 
             if (hasJumbotron) {
-                var offerElement = jQuery(".mba-offer").first(),
+                var offerElement = jQuery("#" + elementId +" .mba-offer").first(),
                     offerId = offerElement.data("offer-id");
                 offerElement.addClass("selected");
                 WIDGET.controller.markOfferAsViewed(offerId);
             }
 
-            jQuery(".mba-offer").on("click", function () {
+            jQuery(".mba-offer").on("click", function (event) {
+                event.stopPropagation();
                 var isSelected = jQuery(this).hasClass("selected");
                 jQuery(".mba-offer").removeClass("selected");
 
@@ -164,6 +163,7 @@ WIDGET.controller = {
                     var theofferId = jQuery(this).data("offer-id");
                     WIDGET.controller.markOfferAsViewed(theofferId);
                 }
+                event.stopImmediatePropagation();
             });
 
             function offerFromEvent (event) {
@@ -239,7 +239,7 @@ WIDGET.controller = {
         }
     },
 
-    appendStyleWithFont: function (fontFamily, backgroundColor) {
+    appendStyleWithFont: function (element, fontFamily, backgroundColor) {
         "use strict";
         var head = document.head || document.getElementsByTagName("head")[0],
             link = document.createElement("link");
@@ -249,18 +249,18 @@ WIDGET.controller = {
         // link.setAttribute("href", "//www.coteries.com/local.ch/MBAPlugin/mba-style.css");
         head.appendChild(link);
 
-        var css = fontFamily ? "#mba-widget-id {font-family: " + fontFamily + "}" : "";
-        css += backgroundColor ? ".mba-offer {background-color: " + backgroundColor + "}" : "";
+        var elementId = "#" + element;
+        var css = elementId + " {margin: 0 0 1em 0; padding: 0; margin-bottom: 1em}";
+        css += fontFamily ? elementId + " {font-family: " + fontFamily + "}" : "";
+        css += backgroundColor ? elementId + " .mba-offer {background-color: " + backgroundColor + "}" : "";
 
-        if (fontFamily || backgroundColor) {
-            var style = document.createElement("style");
-            style.type = "text/css";
-            if (style.styleSheet) {
-                style.styleSheet.cssText = css;
-            } else {
-                style.appendChild(document.createTextNode(css));
-            }
-            head.appendChild(style);
+        var style = document.createElement("style");
+        style.type = "text/css";
+        if (style.styleSheet) {
+            style.styleSheet.cssText = css;
+        } else {
+            style.appendChild(document.createTextNode(css));
         }
+        head.appendChild(style);
     }
 };

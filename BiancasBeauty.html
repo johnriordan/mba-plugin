@@ -114,8 +114,14 @@
 </div>
 <!--[if gte IE 9]><!-->
 <div id="xr_xr" class="xr_noc" style="top:0px; position:relative; text-align:left; margin:0 auto;">
-  <script id="mba-widget" src="mba-widget.js" data-q="5adaVVsO28idpiekjO09Lw" data-jumbotron="false"></script>
 
+  <script src="mba-widget.js"></script>
+  <div id="mba-widget1">
+    <script>
+      var params = {elementId: "mba-widget1", entryId: "5adaVVsO28idpiekjO09Lw"};
+      document.onload = WIDGET.init(params);
+    </script>
+  </div>
 <!--<![endif]-->
 <!--[if lt IE 9]>
 <div class="xr_ap" id="xr_xr" style="width: 961px; height: 1760px; top:0px; left:50%; margin-left: -481px;">

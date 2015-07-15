@@ -4,14 +4,35 @@
 	<title>MBA Widget</title>
 </head>
 <body>
-	<script src="mba-widget.js" 
-          id="mba-widget"
-          data-q="GXvPAor1ifNfpF0U5PTG0w,5adaVVsO28idpiekjO09Lw,Hq_u87CCRWaa4FKBToDQA" 
-          data-lang="it" 
-          data-font="Helvetica" 
-          data-background="white"
-          data-jumbotron="true"
-          data-title="false">
-  </script>
+  <script src="mba-widget.js"></script>
+  <div id="mba-widget">
+    <script>
+      var params = {
+        entryId: "5adaVVsO28idpiekjO09Lw",
+        lang: "fr",
+        font: "Helvetica",
+        background: "white",
+        hasJumbotron: true,
+        hasTitle: true
+      };
+      document.onload = WIDGET.init(params);
+    </script>
+  </div>
+  
+  <div id="mba-widget2">
+    <script>
+      var params = {
+        elementId: "mba-widget2",
+        entryId: "GXvPAor1ifNfpF0U5PTG0w",
+        lang: "it",
+        font: "Georgia",
+        background: "orange",
+        hasJumbotron: false,
+        hasTitle: false
+      };
+      document.onload = WIDGET.init(params);
+    </script>
+  </div>
+
 </body>
 </html>

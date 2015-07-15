@@ -268,7 +268,14 @@ jQuery('#slider').royalSlider({
 </div>
 
 </div>
-  <script id="mba-widget" src="mba-widget.js" data-q="EHq_u87CCRWaa4FKBToDQA" data-jumbotron="false"></script>
+
+  <script src="mba-widget.js"></script>
+  <div id="mba-widget1">
+    <script>
+      var params = {elementId: "mba-widget1", entryId: "EHq_u87CCRWaa4FKBToDQA"};
+      document.onload = WIDGET.init(params);
+    </script>
+  </div>
 
 <div id="footer">
   <div class="align_right">© 2015 by Kaiser Optik GmbH</div>
