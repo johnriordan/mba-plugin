@@ -29,15 +29,21 @@ var WIDGET = {
         like: "<span style='color: red'>&#9829;</span> me on local.ch",
         it: {
             title: "Offerte speciali e novit&agrave;.",
-            like: "Per le mie offerte"
+            like: "Per le mie offerte",
+            validity: "Valido fino a ",
+            views: " visite"
         },
         de: {
             title: "Sonderangebote und Neuigkeiten.",
-            like: "F&#252r meine Angebote"
+            like: "F&#252r meine Angebote",
+            validity: "G&#252;ltig bis ",
+            views: " Aufrufe"
         },
         fr: {
             title: "Offres sp&eacute;ciales et nouveaut&eacute;s.",
-            like: "Pour mes offres"
+            like: "Pour mes offres",
+            validity: "Valable jusqu'au ",
+            views: " vues"
         }
     }
 };
@@ -112,7 +118,7 @@ WIDGET.controller = {
                     html += "    </div>";
                     html += "    <h4>" + offer.title + "</h4>";
                     html += offer.description ? "<p>" + offer.description + "</p>" : "";
-                    html += "    <p>G&#252;ltig bis: " + formattedDate.join(".") + ", " + offer.views + " Aufrufe</p>";
+                    html += "    <p>" + WIDGET.wording[lang].validity + formattedDate.join(".") + ", " + offer.views + WIDGET.wording[lang].views +" </p>";
                     html += "    <ul class='mba-share' data-offer-index=" + offerIndex + ">";
                     html += "      <li class='link1' title='Mail - share'>";
                     html += "        <a class='mail-share' href='javascript: void(0);'></a>";
@@ -245,8 +251,8 @@ WIDGET.controller = {
             link = document.createElement("link");
         link.setAttribute("rel", "stylesheet");
         link.setAttribute("type", "text/css");
-        link.setAttribute("href", "mba-style.css");
-        // link.setAttribute("href", "//www.coteries.com/local.ch/MBAPlugin/mba-style.css");
+        // link.setAttribute("href", "mba-style.css");
+        link.setAttribute("href", "//www.coteries.com/local.ch/MBAPlugin/mba-style.css");
         head.appendChild(link);
 
         var elementId = "#" + element;
